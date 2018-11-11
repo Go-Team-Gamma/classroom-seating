@@ -1,0 +1,28 @@
+# Overview
+
+Classroom seating is a web application empowering teachers to generate classroom seating plans.
+
+## Meta
+- [Homepage](https://github.com/Go-Team-Gamma/classroom-seating)
+- [Wiki](https://github.com/Go-Team-Gamma/classroom-seating/wiki)
+- [Trello Board](https://trello.com/b/pqQOUld5/classroom-seating)
+- [Team Chat](https://nextcloud.groovestomp.com/call/u9dksneb)
+
+## Dependencies
+- [Go](https://golang.org/)
+
+## Setup
+```
+go get github.com/Go-Team-Gamma/classroom-seating
+cd $(go env GOPATH)/src/github.com/Go-Team-Gamma/classroom-seating
+go build
+```
+
+## Running
+```
+go run *.go # Without building an explicit executable.
+./classroom-seating # If using `go build' to generate an executable.
+```
+
+## Configuration
+- N/A (yet)
