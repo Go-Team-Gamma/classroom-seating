@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/BurntSushi/toml"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gocraft/dbr"
+	_ "github.com/lib/pq"
 	"html"
 	"io/ioutil"
 	"log"
@@ -27,8 +27,9 @@ func main() {
 	}
 	log.Printf("%+v\n", cfg)
 
-	dbString := fmt.Sprintf("%v:%v@/%v", cfg.Database.User, cfg.Database.Password, cfg.Database.Name)
-	conn, err := dbr.Open("mysql", dbString, nil)
+	dbString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
+	fmt.Printf("DSN String: %v\n", dbString)
+	conn, err := dbr.Open("postgres", dbString, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,6 +57,7 @@ type Config struct {
 
 type DatabaseConfig struct {
 	Host     string
+	Port     uint
 	Name     string
 	User     string
 	Password string

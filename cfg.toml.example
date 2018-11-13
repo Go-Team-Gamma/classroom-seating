@@ -1,5 +1,6 @@
 [database]
 host = "127.0.0.1"
+port = 5432
 name = "database_name"
 user = "username"
 password = "password"

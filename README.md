@@ -9,12 +9,13 @@ Classroom seating is a web application empowering teachers to generate classroom
 - [Team Chat](https://nextcloud.groovestomp.com/call/u9dksneb)
 
 ## Dependencies
+- PostgreSQL
 - [Go](https://golang.org/)
-- MySQL / MariaDB
+- [Migrate](https://github.com/golang-migrate/migrate/tree/master/cli)
 
 ## Setup
 ```
-go get github.com/Go-Team-Gamma/classroom-seating
+go get -u github.com/Go-Team-Gamma/classroom-seating
 cd $(go env GOPATH)/src/github.com/Go-Team-Gamma/classroom-seating
 cp cfg.toml.example cfg.toml
 ```
