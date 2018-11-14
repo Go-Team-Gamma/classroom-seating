@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# TODO: Get DB vars from cfg.toml DB section
+MIGRATE_PATH=$(pwd)/db/migrations
+COMMAND=$1
+shift
+
+DB_HOST=$(bin/parse-db-from-cfg-toml cfg.toml | grep host | awk '{print $2}' | sed 's/\"//g')
+DB_PORT=$(bin/parse-db-from-cfg-toml cfg.toml | grep port | awk '{print $2}' | sed 's/\"//g')
+DB_NAME=$(bin/parse-db-from-cfg-toml cfg.toml | grep name | awk '{print $2}' | sed 's/\"//g')
+DB_USER=$(bin/parse-db-from-cfg-toml cfg.toml | grep user | awk '{print $2}' | sed 's/\"//g')
+DB_PASS=$(bin/parse-db-from-cfg-toml cfg.toml | grep password | awk '{print $2}' | sed 's/\"//g')
+
+EXTERNAL_COMMAND="migrate \
+-source file://$MIGRATE_PATH \
+-database postgres://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable"
+
+case $COMMAND in
+    "up")
+        $EXTERNAL_COMMAND up $@
+        ;;
+    "down")
+        $EXTERNAL_COMMAND down $@
+        ;;
+    "create")
+        $EXTERNAL_COMMAND create \
+                          -ext psql \
+                          -dir db/migrations \
+                          $@
+        ;;
+    *)
+        ;;
+esac

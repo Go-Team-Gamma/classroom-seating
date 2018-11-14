@@ -1,0 +1,3 @@
+ALTER TABLE users
+ADD CONSTRAINT unique_username
+UNIQUE USING INDEX users_username;
