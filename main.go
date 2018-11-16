@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/gocraft/dbr"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"html"
 	"io/ioutil"
@@ -28,32 +29,40 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dbString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
-	conn, err := dbr.Open("postgres", dbString, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	sess := conn.NewSession(nil)
+	dbString := fmt.Sprintf(
+		"user=%v password=%v host=%v port=%v dbname=%v sslmode=disable",
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.Name,
+	)
 
-	newUser := &User{
+	db, err := sqlx.Connect("postgres", dbString)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	newUser := User{
 		Username: "aoman",
 		Password: "P4ssword!!",
 	}
-	_, err = sess.InsertInto("users").
-		Columns("username", "password").
-		Record(newUser).
-		Exec()
-
+	stmt, err := db.PrepareNamed(`INSERT INTO  users (username, password) VALUES (:username, :password)`)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
-	fmt.Printf("%+v\n", newUser.Id)
+	_, err = stmt.Exec(newUser)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Printf("%+v\n", newUser)
 
-	var users []User
-	sess.Select("*").From("users").Load(&users)
-
-	fmt.Printf("users: %+v\n", users)
+	err = db.Get(&newUser, "SELECT * FROM users WHERE username=$1", newUser.Username)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Printf("%+v\n", newUser)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
@@ -116,7 +125,7 @@ type HttpServerConfig struct {
 }
 
 type User struct {
-	Id       dbr.NullString
+	Id       sql.NullString
 	Username string
 	Password string
 }
