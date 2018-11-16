@@ -10,7 +10,7 @@ Classroom seating is a web application empowering teachers to generate classroom
 
 ## Dependencies
 - PostgreSQL
-- [Go](https://golang.org/)
+- [Go](https://golang.org/) 1.11
 - [Migrate](https://github.com/golang-migrate/migrate/tree/master/cli)
 
 ## Setup
@@ -18,10 +18,24 @@ Classroom seating is a web application empowering teachers to generate classroom
 go get -u github.com/Go-Team-Gamma/classroom-seating
 cd $(go env GOPATH)/src/github.com/Go-Team-Gamma/classroom-seating
 cp cfg.toml.example cfg.toml
+cp .env.example .env
 ```
-Now edit `cfg.toml` appropriately.  
+Now edit `cfg.toml` and `.env` appropriately.
+`.env` isn't strictly required. It provides project-local environment variables.
+
 Finally:
 ```
+. .env
+
+PGUSER=postgres psql template1 -c "CREATE USER $PGUSER WITH PASSWORD '<PASSWORD>';"
+PGUSER=postgres psql template1 -c "CREATE DATABASE $PGDATABASE;"
+PGUSER=postgres psql testdb -c 'CREATE EXTENSION "uuid-ossp";'
+PGUSER=postgres psql testdb -c "CREATE EXTENSION pgcrypto;"
+PGUSER=postgres psql testdb -c "CREATE EXTENSION chkpass;"
+PGUSER=postgres psql testdb -c "GRANT ALL PRIVILEGES ON DATABASE testdb TO $PGUSER;"
+
+bin/migrate up
+
 go build
 ```
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/gocraft/dbr"
@@ -9,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"text/template"
 )
 
 func main() {
@@ -25,23 +27,69 @@ func main() {
 	if _, err := toml.Decode(strDat, &cfg); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("%+v\n", cfg)
 
 	dbString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
-	fmt.Printf("DSN String: %v\n", dbString)
 	conn, err := dbr.Open("postgres", dbString, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	sess := conn.NewSession(nil)
-	tx, err := sess.Begin()
+
+	newUser := &User{
+		Username: "aoman",
+		Password: "P4ssword!!",
+	}
+	_, err = sess.InsertInto("users").
+		Columns("username", "password").
+		Record(newUser).
+		Exec()
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer tx.RollbackUnlessCommitted()
+
+	fmt.Printf("%+v\n", newUser.Id)
+
+	var users []User
+	sess.Select("*").From("users").Load(&users)
+
+	fmt.Printf("users: %+v\n", users)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			return
+		}
+
 		fmt.Fprintf(w, "Hello %q", html.EscapeString(r.URL.Path))
+	})
+
+	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			return
+		}
+
+		viewModel := struct {
+			UrlPath string
+		}{
+			UrlPath: html.EscapeString(r.URL.Path),
+		}
+
+		tmpl, err := template.ParseFiles("templates/register.html")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, viewModel)
+		fmt.Fprintf(w, buf.String())
+	})
+
+	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			return
+		}
+
+		fmt.Printf("%+v\n", r)
 	})
 
 	err = http.ListenAndServe(fmt.Sprintf(":%v", cfg.Server.Port), nil)
@@ -65,4 +113,10 @@ type DatabaseConfig struct {
 
 type HttpServerConfig struct {
 	Port uint
+}
+
+type User struct {
+	Id       dbr.NullString
+	Username string
+	Password string
 }

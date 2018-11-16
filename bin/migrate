@@ -15,6 +15,20 @@ EXTERNAL_COMMAND="migrate \
 -source file://$MIGRATE_PATH \
 -database postgres://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable"
 
+function usage() {
+    echo "usage: $(basename $0) SUBCOMMAND PARAMS"
+    echo
+    echo "This script is a wrapper around migrate."
+    echo
+    echo "Subcommand:"
+    echo -e "\tup"
+    echo -e "\tdown"
+    echo -e "\tcreate"
+    echo
+    echo "Params:"
+    echo -e "\tSee ``migration --help'' for info."
+}
+
 case $COMMAND in
     "up")
         $EXTERNAL_COMMAND up $@
@@ -29,5 +43,6 @@ case $COMMAND in
                           $@
         ;;
     *)
+        usage
         ;;
 esac
