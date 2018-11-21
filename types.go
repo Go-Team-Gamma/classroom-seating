@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Config struct {
@@ -22,7 +23,15 @@ type HttpServerConfig struct {
 }
 
 type User struct {
-	Id       sql.NullString
-	Username string
-	Password string
+	Id        sql.NullString
+	Username  string
+	Password  string
+	CreatedAt time.Time      `db:"created_at"`
+	UpdatedAt time.Time      `db:"updated_at"`
+	DeletedAt sql.NullString `db:"deleted_at"`
+}
+
+type PageData struct {
+	Authenticated bool
+	Title         string
 }
