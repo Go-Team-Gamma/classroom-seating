@@ -5,80 +5,24 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"text/template"
 	"time"
 )
 
 func ShowRoot(w http.ResponseWriter, r *http.Request) {
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
-
-	userId, _ := authenticate(w, r)
-
-	t := template.Must(
-		template.ParseFiles(
-			"templates/header.tmpl",
-			"templates/navigation.tmpl",
-			"templates/footer.tmpl",
-			"templates/index.tmpl"))
-
-	data := PageData{
-		Title:         "Home",
-		Authenticated: userId != "",
-	}
-
-	err := t.ExecuteTemplate(w, "home", data)
-
-	if err != nil {
-		log.Println(err)
-	}
+	renderPage(w, r, "templates/index.tmpl", "Home")
 }
 
 func ShowRegistration(w http.ResponseWriter, r *http.Request) {
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
-
-	userId, _ := authenticate(w, r)
-
-	t := template.Must(
-		template.ParseFiles(
-			"templates/header.tmpl",
-			"templates/navigation.tmpl",
-			"templates/footer.tmpl",
-			"templates/registration.tmpl"))
-
-	data := PageData{
-		Title:         "Registration",
-		Authenticated: userId != "",
-	}
-
-	err := t.ExecuteTemplate(w, "registration", data)
-
-	if err != nil {
-		log.Println(err)
-	}
+	renderPage(w, r, "templates/registration.tmpl", "Registration")
 }
 
 func ShowLogin(w http.ResponseWriter, r *http.Request) {
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
-
-	userId, _ := authenticate(w, r)
-
-	t := template.Must(
-		template.ParseFiles(
-			"templates/header.tmpl",
-			"templates/navigation.tmpl",
-			"templates/footer.tmpl",
-			"templates/login.tmpl"))
-
-	data := PageData{
-		Title:         "Login",
-		Authenticated: userId != "",
-	}
-
-	err := t.ExecuteTemplate(w, "login", data)
-
-	if err != nil {
-		log.Println(err)
-	}
+	renderPage(w, r, "templates/login.tmpl", "Login")
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -90,23 +34,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		Password: r.Form["password"][0],
 	}
 
-	stmt, err := db.PrepareNamed(`INSERT INTO  users (username, password) VALUES (:username, :password)`)
-	if err != nil {
-		http.Error(w, "Error registering", http.StatusInternalServerError)
-		return
-	}
-
-	_, err = stmt.Exec(newUser)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Error registering", http.StatusInternalServerError)
-		return
-	}
-
-	err = db.Get(&newUser, "SELECT * FROM users WHERE username=$1", newUser.Username)
+	row := db.QueryRowx(
+		`INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id`,
+		newUser.Username,
+		newUser.Password,
+	)
+	err := row.Scan(&newUser.Id)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Error finding newly registered user", http.StatusInternalServerError)
+		http.Error(w, "Error registering", http.StatusInternalServerError)
 		return
 	}
 
@@ -118,14 +54,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
 
-	user := User{}
+	user := User{
+		Username: r.Form["username"][0],
+		Password: r.Form["password"][0],
+	}
 
 	// Find the user.
 	err := db.Get(
 		&user,
 		`SELECT * FROM users WHERE username = $1 AND password = $2`,
-		r.Form["username"][0],
-		r.Form["password"][0],
+		user.Username,
+		user.Password,
 	)
 	if err != nil || !user.Id.Valid {
 		log.Println(err)
@@ -150,22 +89,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Create a new authentication for this user.
-		_, err = db.Exec(
-			`INSERT INTO authentications (user_id) VALUES ($1)`,
-			user.Id,
-		)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, "Error logging in", http.StatusInternalServerError)
-			return
-		}
-
-		// Get the last authentication.
-		err = db.Get(
-			&authToken,
-			`SELECT token FROM authentications WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
-			user.Id,
-		)
+		row := db.QueryRowx(`INSERT INTO authentications (user_id) VALUES ($1) RETURNING token`, userId)
+		err = row.Scan(&authToken)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error logging in", http.StatusInternalServerError)
@@ -177,7 +102,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_, err = db.Exec(
 		`UPDATE authentications SET deleted_at = $1 WHERE user_id = $2 AND deleted_at IS NULL and token != $3`,
 		time.Now(),
-		user.Id,
+		userId,
 		authToken,
 	)
 	if err != nil {
@@ -262,4 +187,26 @@ func findLoginAuthToken(userId string) (string, error) {
 
 	log.Printf("findLoginAuthToken: authToken: %s\n", authToken)
 	return authToken, nil
+}
+
+func renderPage(w http.ResponseWriter, r *http.Request, templateName, title string) {
+	userId, _ := authenticate(w, r)
+
+	t := template.Must(
+		template.ParseFiles(
+			"templates/header.tmpl",
+			"templates/navigation.tmpl",
+			"templates/footer.tmpl",
+			templateName))
+
+	data := PageData{
+		Title:         title,
+		Authenticated: userId != "",
+	}
+
+	err := t.ExecuteTemplate(w, strings.ToLower(title), data)
+
+	if err != nil {
+		log.Println(err)
+	}
 }
