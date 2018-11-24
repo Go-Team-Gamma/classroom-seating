@@ -29,10 +29,10 @@ Finally:
 
 PGUSER=postgres psql template1 -c "CREATE USER $PGUSER WITH PASSWORD '<PASSWORD>';"
 PGUSER=postgres psql template1 -c "CREATE DATABASE $PGDATABASE;"
-PGUSER=postgres psql testdb -c 'CREATE EXTENSION "uuid-ossp";'
-PGUSER=postgres psql testdb -c "CREATE EXTENSION pgcrypto;"
-PGUSER=postgres psql testdb -c "CREATE EXTENSION chkpass;"
-PGUSER=postgres psql testdb -c "GRANT ALL PRIVILEGES ON DATABASE testdb TO $PGUSER;"
+PGUSER=postgres psql $PGDATABASE -c 'CREATE EXTENSION "uuid-ossp";'
+PGUSER=postgres psql $PGDATABASE -c "CREATE EXTENSION pgcrypto;"
+PGUSER=postgres psql $PGDATABASE -c "CREATE EXTENSION chkpass;"
+PGUSER=postgres psql $PGDATABASE -c "GRANT ALL PRIVILEGES ON DATABASE $PGDATABASE TO $PGUSER;"
 
 bin/migrate up
 
