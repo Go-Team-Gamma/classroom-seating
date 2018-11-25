@@ -3,18 +3,23 @@ package main
 import (
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/gocraft/dbr"
+	"github.com/husobee/vestigo"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
+)
+
+var (
+	db *sqlx.DB
 )
 
 func main() {
 	var (
 		cfg Config
 	)
+	router := vestigo.NewRouter()
 
 	dat, err := ioutil.ReadFile("cfg.toml")
 	if err != nil {
@@ -25,44 +30,26 @@ func main() {
 	if _, err := toml.Decode(strDat, &cfg); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("%+v\n", cfg)
 
-	dbString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
-	fmt.Printf("DSN String: %v\n", dbString)
-	conn, err := dbr.Open("postgres", dbString, nil)
+	dbString := fmt.Sprintf(
+		"user=%v password=%v host=%v port=%v dbname=%v sslmode=disable",
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.Name,
+	)
+
+	db, err = sqlx.Connect("postgres", dbString)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
-	sess := conn.NewSession(nil)
-	tx, err := sess.Begin()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer tx.RollbackUnlessCommitted()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello %q", html.EscapeString(r.URL.Path))
-	})
+	db.MustExec("DELETE FROM users")
 
-	err = http.ListenAndServe(fmt.Sprintf(":%v", cfg.Server.Port), nil)
-	if err != nil {
-		log.Fatal("http.listenAndServe: ", err)
-	}
-}
+	router.Get("/", ShowRootHandler)
+	router.Get("/register", ShowRegistrationHandler)
+	router.Post("/users", CreateUserHandler)
 
-type Config struct {
-	Database DatabaseConfig   `toml:"database"`
-	Server   HttpServerConfig `toml:"http_server"`
-}
-
-type DatabaseConfig struct {
-	Host     string
-	Port     uint
-	Name     string
-	User     string
-	Password string
-}
-
-type HttpServerConfig struct {
-	Port uint
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Server.Port), router))
 }
