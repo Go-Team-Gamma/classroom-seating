@@ -126,7 +126,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
 	fmt.Fprintln(w, "Success!")
 
-	userId, err := authenticate(w, r)
+	userId, err := authenticate(r)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Couldn't authenticate", http.StatusBadRequest)
@@ -146,12 +146,16 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 //-- Private, internal helpers.
 
+func fifteenMinutesBefore(t time.Time) time.Time {
+	return t.Add(-time.Minute * 15)
+}
+
 func logHandlerIntro(requestMethod, requestPath string, requestData url.Values) {
 	log.Printf("%s %q: %+v\n", requestMethod, requestPath, requestData)
 }
 
-func authenticate(w http.ResponseWriter, r *http.Request) (string, error) {
-	authCookie, err := r.Cookie("authtoken")
+func authenticate(c Cookier) (string, error) {
+	authCookie, err := c.Cookie("authtoken")
 	if err != nil {
 		return "", err
 	}
@@ -161,7 +165,7 @@ func authenticate(w http.ResponseWriter, r *http.Request) (string, error) {
 		&userId,
 		`SELECT user_id FROM authentications WHERE token = $1 AND deleted_at IS NULL AND updated_at > $2`,
 		authCookie.Value,
-		time.Now().Add(-time.Minute*15),
+		fifteenMinutesBefore(time.Now()),
 	)
 	if err != nil {
 		log.Println(err)
@@ -179,7 +183,7 @@ func findLoginAuthToken(userId string) (string, error) {
 		&authToken,
 		`SELECT token FROM authentications WHERE user_id = $1 AND deleted_at IS NULL AND updated_at > $2`,
 		userId,
-		time.Now().Add(-time.Minute*15),
+		fifteenMinutesBefore(time.Now()),
 	)
 	if err != nil {
 		return "", err
@@ -190,7 +194,7 @@ func findLoginAuthToken(userId string) (string, error) {
 }
 
 func renderPage(w http.ResponseWriter, r *http.Request, templateName, title string) {
-	userId, _ := authenticate(w, r)
+	userId, _ := authenticate(r)
 
 	t := template.Must(
 		template.ParseFiles(

@@ -23,19 +23,29 @@ cp .env.example .env
 Now edit `cfg.toml` and `.env` appropriately.
 `.env` isn't strictly required. It provides project-local environment variables.
 
-Finally:
 ```
-. .env
+sudo su postgres # Login as postgres user.
+```
 
-PGUSER=postgres psql template1 -c "CREATE USER $PGUSER WITH PASSWORD '<PASSWORD>';"
-PGUSER=postgres psql template1 -c "CREATE DATABASE $PGDATABASE;"
-PGUSER=postgres psql $PGDATABASE -c 'CREATE EXTENSION "uuid-ossp";'
-PGUSER=postgres psql $PGDATABASE -c "CREATE EXTENSION pgcrypto;"
-PGUSER=postgres psql $PGDATABASE -c "CREATE EXTENSION chkpass;"
-PGUSER=postgres psql $PGDATABASE -c "GRANT ALL PRIVILEGES ON DATABASE $PGDATABASE TO $PGUSER;"
+Export `$PGNEWUSER`, `$PGPASSWORD` and `$PGDATABASE` according to what you configured in `cfg.toml`:
+```
+psql template1 -c "CREATE USER $PGNEWUSER WITH PASSWORD '$PGPASSWORD';"
+psql template1 -c "CREATE DATABASE $PGDATABASE;"
+psql $PGDATABASE -c 'CREATE EXTENSION "uuid-ossp";'
+psql $PGDATABASE -c "CREATE EXTENSION pgcrypto;"
+psql $PGDATABASE -c "CREATE EXTENSION chkpass;"
+psql $PGDATABASE -c "GRANT ALL PRIVILEGES ON DATABASE $PGDATABASE TO $PGNEWUSER;"
 
-bin/migrate up
+exit # Logout as postgres user.
+```
 
+Now do the migrations:
+```
+bin/db-migrate up
+```
+
+And now you can build the project:
+```
 go build
 ```
 
@@ -47,3 +57,35 @@ go run *.go # Without building an explicit executable.
 
 ## Configuration
 - N/A (yet)
+
+## Testing
+```
+cp cfg.toml.example cfg.test.toml
+```
+Now edit `cfg.test.toml`.
+
+```
+sudo su postgres # Login as postgres user.
+```
+
+Export `$PGNEWUSER`, `$PGPASSWORD` and `$PGDATABASE` according to what you configured in `cfg.test.toml`:
+```
+psql template1 -c "CREATE USER $PGNEWUSER WITH PASSWORD '$PGPASSWORD';"
+psql template1 -c "CREATE DATABASE $PGDATABASE;"
+psql $PGDATABASE -c 'CREATE EXTENSION "uuid-ossp";'
+psql $PGDATABASE -c "CREATE EXTENSION pgcrypto;"
+psql $PGDATABASE -c "CREATE EXTENSION chkpass;"
+psql $PGDATABASE -c "GRANT ALL PRIVILEGES ON DATABASE $PGDATABASE TO $PGNEWUSER;"
+
+exit # Logout as postgres user.
+```
+
+Now do the migrations:
+```
+CFG=cfg.test.toml bin/db-migrate up
+```
+
+And finally, you can run tests:
+```
+go test ./...
+```

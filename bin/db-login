@@ -1,0 +1,43 @@
+#!/bin/sh
+
+SCRIPT_NAME=$(basename $0)
+
+usage () {
+    echo "Usage: $0 [-c <toml config file> -p]"
+    echo
+    echo "Options:"
+    echo "\t-c path to config file"
+    echo "\t   This contains DB configuration info in toml format."
+    echo "\t-p When present, skip overwriting ~/.pgpass"
+}
+
+overwrite_pgpass=true
+cfg=cfg.toml
+
+while getopts ':c:p:h' option; do
+    case $option in
+        c  ) cfg=${OPTARG};;
+        p  ) overwrite_pgpass=false;;
+        h  ) usage; exit;;
+        *  ) usage; exit;;
+    esac
+done
+shift $((OPTIND-1))
+
+DB_HOST=$(bin/parse-db-from-cfg-toml ${cfg} | grep host | awk '{print $2}' | sed 's/\"//g')
+DB_PORT=$(bin/parse-db-from-cfg-toml ${cfg} | grep port | awk '{print $2}' | sed 's/\"//g')
+DB_NAME=$(bin/parse-db-from-cfg-toml ${cfg} | grep name | awk '{print $2}' | sed 's/\"//g')
+DB_USER=$(bin/parse-db-from-cfg-toml ${cfg} | grep user | awk '{print $2}' | sed 's/\"//g')
+DB_PASS=$(bin/parse-db-from-cfg-toml ${cfg} | grep password | awk '{print $2}' | sed 's/\"//g')
+
+if [ -f "~/.pgpass" ] && [ "${overwrite_pgpass}" = "true" ]; then
+    rm -rf "~/.pgpass.$SCRIPT_NAME.old"
+    mv .pgpass "~/.pgpass.$SCRIPT_NAME.old"
+fi
+if [ "${overwrite_pgpass}" = "true" ]; then
+    echo "*:*:*:$DB_USER:$DB_PASS" > ~/.pgpass
+    chmod 600 ~/.pgpass
+fi
+
+CMD="psql -U $DB_USER -h $DB_HOST -p $DB_PORT $DB_NAME"
+exec $CMD
