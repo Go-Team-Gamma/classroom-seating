@@ -1,0 +1,8 @@
+CREATE TABLE authentications(
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    token UUID NOT NULL DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT Now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT Now(),
+    deleted_at TIMESTAMPTZ
+);

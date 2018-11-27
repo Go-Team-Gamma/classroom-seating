@@ -45,11 +45,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	db.MustExec("DELETE FROM users")
-
-	router.Get("/", ShowRootHandler)
-	router.Get("/register", ShowRegistrationHandler)
-	router.Post("/users", CreateUserHandler)
+	router.Get("/", ShowRoot)
+	router.Get("/register", ShowRegistration)
+	router.Get("/login", ShowLogin)
+	router.Post("/users", CreateUser)
+	router.Post("/login", Login)
+	router.Get("/logout", Logout)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Server.Port), router))
 }

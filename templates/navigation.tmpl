@@ -1,0 +1,9 @@
+{{ define "navigation" }}
+<ul>
+  {{ if ne .Title "home" }}<li><a href="/">Home</a></li>{{ end }}
+  {{ if ne .Title "registration" }}<li><a href="/register">Register</a></li>{{ end }}
+  {{ if (and (ne .Title "login") (not .Authenticated)) }}<li><a href="/login">Login</a></li>{{ end }}
+  {{ if .Authenticated }}<li><a href="/logout">Logout</a></li>{{ end }}
+</ul>
+<hr/>
+{{ end }}

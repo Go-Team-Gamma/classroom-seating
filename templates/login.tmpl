@@ -1,0 +1,15 @@
+{{ define "login" }}
+{{ template "header" . }}
+{{ template "navigation" . }}
+<h1>Login</h1>
+<form action="/login" method="post">
+  <label>username</label>
+  <input name="username"></input>
+  <br/>
+  <label>password</label>
+  <input name="password" type="password"></input>
+  <br/>
+  <input type="submit" value="submit">Submit</input>
+</form>
+{{ template "footer" . }}
+{{ end }}
