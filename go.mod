@@ -9,5 +9,6 @@ require (
 	github.com/motemen/go-quickfix v0.0.0-20160413151302-5c522febc679 // indirect
 	github.com/motemen/gore v0.3.0 // indirect
 	github.com/peterh/liner v1.1.0 // indirect
+	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	golang.org/x/tools v0.0.0-20181119130350-139d099f6620 // indirect
 )

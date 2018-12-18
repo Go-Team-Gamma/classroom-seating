@@ -32,8 +32,6 @@ Export `$PGNEWUSER`, `$PGPASSWORD` and `$PGDATABASE` according to what you confi
 psql template1 -c "CREATE USER $PGNEWUSER WITH PASSWORD '$PGPASSWORD';"
 psql template1 -c "CREATE DATABASE $PGDATABASE;"
 psql $PGDATABASE -c 'CREATE EXTENSION "uuid-ossp";'
-psql $PGDATABASE -c "CREATE EXTENSION pgcrypto;"
-psql $PGDATABASE -c "CREATE EXTENSION chkpass;"
 psql $PGDATABASE -c "GRANT ALL PRIVILEGES ON DATABASE $PGDATABASE TO $PGNEWUSER;"
 
 exit # Logout as postgres user.
@@ -51,7 +49,6 @@ go build
 
 ## Running
 ```
-go run *.go # Without building an explicit executable.
 ./classroom-seating # If using `go build' to generate an executable.
 ```
 
@@ -73,8 +70,6 @@ Export `$PGNEWUSER`, `$PGPASSWORD` and `$PGDATABASE` according to what you confi
 psql template1 -c "CREATE USER $PGNEWUSER WITH PASSWORD '$PGPASSWORD';"
 psql template1 -c "CREATE DATABASE $PGDATABASE;"
 psql $PGDATABASE -c 'CREATE EXTENSION "uuid-ossp";'
-psql $PGDATABASE -c "CREATE EXTENSION pgcrypto;"
-psql $PGDATABASE -c "CREATE EXTENSION chkpass;"
 psql $PGDATABASE -c "GRANT ALL PRIVILEGES ON DATABASE $PGDATABASE TO $PGNEWUSER;"
 
 exit # Logout as postgres user.

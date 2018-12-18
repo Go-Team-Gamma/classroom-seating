@@ -18,5 +18,7 @@ github.com/motemen/gore v0.3.0 h1:LcpH6Os6PUPAcWNTIcwEXrlVJ4/4sTGYWAExk9lsAmg=
 github.com/motemen/gore v0.3.0/go.mod h1:jOHUyog5qCVzAXc0jmrpuQWUvAgd+HfcP88CKW5kqFw=
 github.com/peterh/liner v1.1.0 h1:f+aAedNJA6uk7+6rXsYBnhdo4Xux7ESLe+kcuVUF5os=
 github.com/peterh/liner v1.1.0/go.mod h1:CRroGNssyjTd/qIG2FyxByd2S8JEAZXBl4qUrZf8GS0=
+golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9 h1:mKdxBk7AujPs8kU4m80U72y/zjbZ3UcXC7dClwKbUI0=
+golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/tools v0.0.0-20181119130350-139d099f6620 h1:fPY2GH0iMDQKNr1ijDOu6fg5CHujOlyfMNWEG4X9gNA=
 golang.org/x/tools v0.0.0-20181119130350-139d099f6620/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=

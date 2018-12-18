@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	"golang.org/x/crypto/bcrypt" 
 )
 
 func ShowRoot(w http.ResponseWriter, r *http.Request) {
@@ -29,9 +30,17 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
 
+	password := r.FormValue("password")
+	encryptedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error registering", http.StatusInternalServerError)
+		return
+	}
+
 	newUser := User{
-		Username: r.Form["username"][0],
-		Password: r.Form["password"][0],
+		Username: r.FormValue("username"),
+		Password: encryptedPass,
 	}
 
 	row := db.QueryRowx(
@@ -39,7 +48,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		newUser.Username,
 		newUser.Password,
 	)
-	err := row.Scan(&newUser.Id)
+	err = row.Scan(&newUser.Id)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Error registering", http.StatusInternalServerError)
@@ -54,21 +63,28 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	logHandlerIntro(r.Method, r.URL.Path, r.Form)
 
+
 	user := User{
-		Username: r.Form["username"][0],
-		Password: r.Form["password"][0],
+		Username: r.FormValue("username"),
 	}
 
 	// Find the user.
 	err := db.Get(
 		&user,
-		`SELECT * FROM users WHERE username = $1 AND password = $2`,
+		`SELECT * FROM users WHERE username = $1`,
 		user.Username,
-		user.Password,
 	)
 	if err != nil || !user.Id.Valid {
 		log.Println(err)
-		http.Error(w, "Error logging in", http.StatusBadRequest)
+		http.Error(w, "Error logging in", http.StatusUnauthorized)
+		return
+	}
+
+	incomingPass := []byte(r.FormValue("password"))
+	err = bcrypt.CompareHashAndPassword(user.Password, incomingPass)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error logging in", http.StatusUnauthorized)
 		return
 	}
 
