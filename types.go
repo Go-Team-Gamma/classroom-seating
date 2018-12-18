@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"time"
+	"net/http"
 )
 
 type Config struct {
@@ -34,4 +35,8 @@ type User struct {
 type PageData struct {
 	Authenticated bool
 	Title         string
+}
+
+type Cookier interface {
+	Cookie(name string) (*http.Cookie, error)
 }

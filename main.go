@@ -16,9 +16,6 @@ var (
 )
 
 func main() {
-	var (
-		cfg Config
-	)
 	router := vestigo.NewRouter()
 
 	dat, err := ioutil.ReadFile("cfg.toml")
@@ -27,6 +24,7 @@ func main() {
 	}
 	strDat := string(dat)
 
+	var cfg Config
 	if _, err := toml.Decode(strDat, &cfg); err != nil {
 		log.Fatal(err)
 	}
